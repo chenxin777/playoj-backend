@@ -26,13 +26,18 @@ create table if not exists user
     index idx_unionId (unionId)
 ) comment '用户' collate = utf8mb4_unicode_ci;
 
--- 帖子表
-create table if not exists post
+-- 题目表
+create table if not exists question
 (
     id         bigint auto_increment comment 'id' primary key,
     title      varchar(512)                       null comment '标题',
     content    text                               null comment '内容',
     tags       varchar(1024)                      null comment '标签列表（json 数组）',
+    answer     text                               null comment '题目答案',
+    submitNum  int      default 0                 not null comment '题目提交数',
+    acceptNum  int      default 0                 not null comment '题目通过数',
+    judgeCase  text                               null comment '判题用例(json数组)',
+    judgeConfig text                               null comment '判题配置(json对象)',
     thumbNum   int      default 0                 not null comment '点赞数',
     favourNum  int      default 0                 not null comment '收藏数',
     userId     bigint                             not null comment '创建用户 id',
@@ -40,19 +45,23 @@ create table if not exists post
     updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     isDelete   tinyint  default 0                 not null comment '是否删除',
     index idx_userId (userId)
-) comment '帖子' collate = utf8mb4_unicode_ci;
+) comment '题目表' collate = utf8mb4_unicode_ci;
 
--- 帖子点赞表（硬删除）
-create table if not exists post_thumb
+-- 题目提交表
+create table if not exists user_question
 (
     id         bigint auto_increment comment 'id' primary key,
-    postId     bigint                             not null comment '帖子 id',
-    userId     bigint                             not null comment '创建用户 id',
+    language   varchar(128)                           not null comment '编程语言',
+    questionId     bigint                             not null comment '题目 id',
+    userId     bigint                             not null comment '提交用户 id',
+    code       text                               null comment '用户提交代码',
+    status     int   default 0                 not null comment '判题状态(0待判题、1判题中、2成功、3失败)',
+    judgeInfo  text                               null comment '判题信息(json对象)',
     createTime datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    index idx_postId (postId),
+    index idx_questionId (questionId),
     index idx_userId (userId)
-) comment '帖子点赞';
+) comment '题目提交表';
 
 -- 帖子收藏表（硬删除）
 create table if not exists post_favour
