@@ -1,5 +1,6 @@
 package com.chenxin.playojbackend.controller;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chenxin.playojbackend.annotation.AuthCheck;
@@ -11,7 +12,6 @@ import com.chenxin.playojbackend.constant.UserConstant;
 import com.chenxin.playojbackend.exception.BusinessException;
 import com.chenxin.playojbackend.exception.ThrowUtils;
 import com.chenxin.playojbackend.model.dto.question.*;
-import com.chenxin.playojbackend.model.dto.userquestion.QuestionSubmitQueryRequest;
 import com.chenxin.playojbackend.model.entity.Question;
 import com.chenxin.playojbackend.model.entity.User;
 import com.chenxin.playojbackend.model.vo.QuestionVO;
@@ -22,7 +22,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -68,9 +67,9 @@ public class QuestionController {
         if (ObjectUtils.isNotEmpty(judgeCaseList)) {
             question.setJudgeCase(JSONUtil.toJsonStr(judgeCaseList));
         }
-        List<JudgeConfig> judgeConfigList = questionAddRequest.getJudgeConfig();
-        if (ObjectUtils.isNotEmpty(judgeConfigList)) {
-            question.setJudgeConfig(JSONUtil.toJsonStr(judgeConfigList));
+        JudgeConfig judgeConfig = questionAddRequest.getJudgeConfig();
+        if (ObjectUtil.isNotEmpty(judgeConfig)) {
+            question.setJudgeConfig(JSONUtil.toJsonStr(judgeConfig));
         }
         questionService.validQuestion(question, true);
         User loginUser = userService.getLoginUser(request);
@@ -130,9 +129,9 @@ public class QuestionController {
         if (ObjectUtils.isNotEmpty(judgeCaseList)) {
             question.setJudgeCase(JSONUtil.toJsonStr(judgeCaseList));
         }
-        List<JudgeConfig> judgeConfigList = questionUpdateRequest.getJudgeConfig();
-        if (ObjectUtils.isNotEmpty(judgeConfigList)) {
-            question.setJudgeConfig(JSONUtil.toJsonStr(judgeConfigList));
+        JudgeConfig judgeConfig = questionUpdateRequest.getJudgeConfig();
+        if (ObjectUtil.isNotEmpty(judgeConfig)) {
+            question.setJudgeConfig(JSONUtil.toJsonStr(judgeConfig));
         }
         // 参数校验
         questionService.validQuestion(question, false);
@@ -160,6 +159,30 @@ public class QuestionController {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         return ResultUtils.success(questionService.getQuestionVO(question, request));
+    }
+
+    /**
+     * @description 管理员或自己查看题目详情
+     * @author fangchenxin
+     * @date 2024/6/15 20:39
+     * @param id
+     * @param request
+     * @return com.chenxin.playojbackend.common.BaseResponse<com.chenxin.playojbackend.model.entity.Question>
+     */
+    @GetMapping("/get")
+    public BaseResponse<Question> getQuestionById(long id, HttpServletRequest request) {
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Question question = questionService.getById(id);
+        if (question == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        if (!question.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        return ResultUtils.success(question);
     }
 
     /**
@@ -245,9 +268,9 @@ public class QuestionController {
         if (ObjectUtils.isNotEmpty(judgeCaseList)) {
             question.setJudgeCase(JSONUtil.toJsonStr(judgeCaseList));
         }
-        List<JudgeConfig> judgeConfigList = questionEditRequest.getJudgeConfig();
-        if (ObjectUtils.isNotEmpty(judgeConfigList)) {
-            question.setJudgeConfig(JSONUtil.toJsonStr(judgeConfigList));
+        JudgeConfig judgeConfig = questionEditRequest.getJudgeConfig();
+        if (ObjectUtil.isNotEmpty(judgeConfig)) {
+            question.setJudgeConfig(JSONUtil.toJsonStr(judgeConfig));
         }
         // 参数校验
         questionService.validQuestion(question, false);
