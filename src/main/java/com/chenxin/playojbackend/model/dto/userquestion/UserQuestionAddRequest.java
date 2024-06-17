@@ -1,5 +1,7 @@
 package com.chenxin.playojbackend.model.dto.userquestion;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -22,6 +24,7 @@ public class UserQuestionAddRequest implements Serializable {
     /**
      * 题目 id
      */
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long questionId;
 
     /**

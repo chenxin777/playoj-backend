@@ -8,6 +8,7 @@ import com.chenxin.playojbackend.common.ErrorCode;
 import com.chenxin.playojbackend.constant.CommonConstant;
 import com.chenxin.playojbackend.exception.BusinessException;
 import com.chenxin.playojbackend.exception.ThrowUtils;
+import com.chenxin.playojbackend.judge.JudgeService;
 import com.chenxin.playojbackend.mapper.UserQuestionMapper;
 import com.chenxin.playojbackend.model.dto.userquestion.QuestionSubmitQueryRequest;
 import com.chenxin.playojbackend.model.dto.userquestion.UserQuestionAddRequest;
@@ -23,11 +24,13 @@ import com.chenxin.playojbackend.service.UserService;
 import com.chenxin.playojbackend.utils.SqlUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -45,6 +48,10 @@ public class UserQuestionServiceImpl extends ServiceImpl<UserQuestionMapper, Use
     @Resource
     private UserService userService;
 
+    @Resource
+    @Lazy
+    private JudgeService judgeService;
+
     @Override
     public Long doUserQuestion(UserQuestionAddRequest userQuestionAddRequest, User loginUser) {
         // 判断语言
@@ -56,23 +63,29 @@ public class UserQuestionServiceImpl extends ServiceImpl<UserQuestionMapper, Use
         Long questionId = userQuestionAddRequest.getQuestionId();
         Question question = questionService.getById(questionId);
         ThrowUtils.throwIf(ObjectUtils.isEmpty(question), ErrorCode.PARAMS_ERROR, "题目不存在");
-
+        // 判断代码是否为空
         String code = userQuestionAddRequest.getCode();
         ThrowUtils.throwIf(StringUtils.isBlank(code), ErrorCode.PARAMS_ERROR, "提交代码为空");
         Long userId = loginUser.getId();
+        // 封装用户提交信息
         UserQuestion userQuestion = new UserQuestion();
         userQuestion.setQuestionId(questionId);
         userQuestion.setUserId(userId);
         userQuestion.setLanguage(language);
         userQuestion.setJudgeInfo("{}");
         userQuestion.setCode(code);
-        // todo 初始状态
+        // 初始状态为待判题
         userQuestion.setStatus(QuestionSubmitStatusEnum.WAITING.getValue());
         boolean res = this.save(userQuestion);
         if (!res) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据插入失败");
         }
-        return userQuestion.getId();
+        // todo 异步执行判题服务
+        Long userQuestionId = userQuestion.getId();
+        CompletableFuture.runAsync(() -> {
+            judgeService.doJudge(userQuestionId);
+        });
+        return userQuestionId;
     }
 
     @Override

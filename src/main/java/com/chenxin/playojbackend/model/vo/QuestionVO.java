@@ -45,9 +45,9 @@ public class QuestionVO implements Serializable {
     private String answer;
 
     /**
-     * 判题配置(json对象)
+     * 判题配置
      */
-    private List<JudgeConfig> judgeConfig;
+    private JudgeConfig judgeConfig;
 
     /**
      * 题目提交数
@@ -96,7 +96,7 @@ public class QuestionVO implements Serializable {
             String tags = JSONUtil.toJsonStr(tagList);
             question.setTags(tags);
         }
-        List<JudgeConfig> judgeConfig = questionVO.getJudgeConfig();
+        JudgeConfig judgeConfig = questionVO.getJudgeConfig();
         if (judgeConfig != null) {
             question.setJudgeConfig(JSONUtil.toJsonStr(judgeConfig));
         }
@@ -118,7 +118,7 @@ public class QuestionVO implements Serializable {
         String tags = question.getTags();
         questionVO.setTags(JSONUtil.toList(tags, String.class));
         String judgeConfig = question.getJudgeConfig();
-        questionVO.setJudgeConfig(JSONUtil.toList(judgeConfig, JudgeConfig.class));
+        questionVO.setJudgeConfig(JSONUtil.toBean(judgeConfig, JudgeConfig.class));
         return questionVO;
     }
 }
