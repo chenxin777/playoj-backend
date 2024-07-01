@@ -3,19 +3,18 @@ package com.chenxin.playojbackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.chenxin.playojbackend.model.dto.user.UserQueryRequest;
+import com.chenxin.playojbackend.model.entity.User;
 import com.chenxin.playojbackend.model.vo.LoginUserVO;
 import com.chenxin.playojbackend.model.vo.UserVO;
-import com.chenxin.playojbackend.model.entity.User;
 
-import java.util.List;
 import javax.servlet.http.HttpServletRequest;
-import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
+import java.util.List;
 
 /**
  * 用户服务
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author chenxin777
+ * 
  */
 public interface UserService extends IService<User> {
 
@@ -38,15 +37,6 @@ public interface UserService extends IService<User> {
      * @return 脱敏后的用户信息
      */
     LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
-
-    /**
-     * 用户登录（微信开放平台）
-     *
-     * @param wxOAuth2UserInfo 从微信获取的用户信息
-     * @param request
-     * @return 脱敏后的用户信息
-     */
-    LoginUserVO userLoginByMpOpen(WxOAuth2UserInfo wxOAuth2UserInfo, HttpServletRequest request);
 
     /**
      * 获取当前登录用户

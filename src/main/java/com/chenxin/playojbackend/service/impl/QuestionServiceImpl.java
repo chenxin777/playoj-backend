@@ -83,7 +83,6 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         }
         queryWrapper.like(StringUtils.isNotBlank(answer), "answer", answer);
         queryWrapper.eq(userId != null && userId > 0, "userId", userId);
-        queryWrapper.eq("isDelete", false);
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
         return queryWrapper;
     }

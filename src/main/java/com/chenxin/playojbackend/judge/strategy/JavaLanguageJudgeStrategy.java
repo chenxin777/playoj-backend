@@ -8,6 +8,7 @@ import com.chenxin.playojbackend.model.entity.Question;
 import com.chenxin.playojbackend.model.enums.JudgeInfoMessageEnum;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author fangchenxin
@@ -22,9 +23,9 @@ public class JavaLanguageJudgeStrategy implements JudgeStrategy {
         // 代码执行信息
         JudgeInfo judgeInfo = judgeContext.getJudgeInfo();
         // 代码执行时间
-        Long time = judgeInfo.getTime();
+        Long time = Optional.ofNullable(judgeInfo.getTime()).orElse(0L);
         // 占用内存
-        Long memory = judgeInfo.getMemory();
+        Long memory = Optional.ofNullable(judgeInfo.getMemory()).orElse(0L);
         judgeInfoResponse.setTime(time);
         judgeInfoResponse.setMemory(memory);
         // 测试用例输入

@@ -3,8 +3,8 @@ package com.chenxin.playojbackend.common;
 /**
  * 自定义错误码
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author chenxin777
+ * 
  */
 public enum ErrorCode {
 
@@ -15,7 +15,9 @@ public enum ErrorCode {
     NOT_FOUND_ERROR(40400, "请求数据不存在"),
     FORBIDDEN_ERROR(40300, "禁止访问"),
     SYSTEM_ERROR(50000, "系统内部异常"),
-    OPERATION_ERROR(50001, "操作失败");
+    OPERATION_ERROR(50001, "操作失败"),
+    API_REQUEST_ERROR(50010, "接口调用失败"),
+    MANY_REQUEST(42900, "请求过于频繁");
 
     /**
      * 状态码

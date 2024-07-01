@@ -1,6 +1,7 @@
 package com.chenxin.playojbackend.judge;
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.chenxin.playojbackend.common.ErrorCode;
 import com.chenxin.playojbackend.exception.BusinessException;
 import com.chenxin.playojbackend.judge.codesandbox.CodeSandbox;
@@ -14,6 +15,7 @@ import com.chenxin.playojbackend.model.dto.question.JudgeCase;
 import com.chenxin.playojbackend.model.dto.userquestion.JudgeInfo;
 import com.chenxin.playojbackend.model.entity.Question;
 import com.chenxin.playojbackend.model.entity.UserQuestion;
+import com.chenxin.playojbackend.model.enums.JudgeInfoMessageEnum;
 import com.chenxin.playojbackend.model.enums.QuestionSubmitStatusEnum;
 import com.chenxin.playojbackend.service.QuestionService;
 import com.chenxin.playojbackend.service.UserQuestionService;
@@ -113,6 +115,18 @@ public class JudgeServiceImpl implements JudgeService {
         statusUpdateRes = userQuestionService.updateById(userQuestionUpdate);
         if (!statusUpdateRes) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "判题状态更新失败");
+        }
+        synchronized (questionId) {
+            // 更新题目通过数
+            if (JudgeInfoMessageEnum.ACCEPTED.getText().equals(judgeInfoRes.getMessage())) {
+                UpdateWrapper<Question> updateWrapper = new UpdateWrapper<>();
+                updateWrapper.eq("id", questionId);
+                updateWrapper.setSql("acceptNum = acceptNum + 1");
+                boolean questionUpdateRes = questionService.update(updateWrapper);
+                if (!questionUpdateRes) {
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目提交数更新失败");
+                }
+            }
         }
         // 查用户提交信息，返回
         return userQuestionService.getById(userQuestionId);

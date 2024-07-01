@@ -24,11 +24,11 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * 帖子点赞接口
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author chenxin777
+ * 
  */
 @RestController
-@RequestMapping("/user_question")
+//@RequestMapping("/user_question")
 @Slf4j
 public class UserQuestionController {
 
@@ -46,7 +46,7 @@ public class UserQuestionController {
      * @author fangchenxin
      * @date 2024/6/14 00:14
      */
-    @PostMapping("/")
+    /*@PostMapping("/")
     public BaseResponse<Long> doUserQuestion(@RequestBody UserQuestionAddRequest userQuestionAddRequest,
                                              HttpServletRequest request) {
         if (userQuestionAddRequest == null || userQuestionAddRequest.getQuestionId() < 0) {
@@ -67,5 +67,5 @@ public class UserQuestionController {
         final User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(userQuestionService.getQuestionVOPage(userQuestionPage, loginUser));
     }
-
+*/
 }

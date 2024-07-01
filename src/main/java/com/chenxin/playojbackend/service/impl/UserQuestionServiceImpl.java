@@ -2,6 +2,7 @@ package com.chenxin.playojbackend.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chenxin.playojbackend.common.ErrorCode;
@@ -18,6 +19,7 @@ import com.chenxin.playojbackend.model.entity.UserQuestion;
 import com.chenxin.playojbackend.model.enums.QuestionSubmitLanguageEnum;
 import com.chenxin.playojbackend.model.enums.QuestionSubmitStatusEnum;
 import com.chenxin.playojbackend.model.vo.UserQuestionVO;
+import com.chenxin.playojbackend.model.vo.UserVO;
 import com.chenxin.playojbackend.service.QuestionService;
 import com.chenxin.playojbackend.service.UserQuestionService;
 import com.chenxin.playojbackend.service.UserService;
@@ -80,7 +82,17 @@ public class UserQuestionServiceImpl extends ServiceImpl<UserQuestionMapper, Use
         if (!res) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据插入失败");
         }
-        // todo 异步执行判题服务
+        // 修改题目提交数
+        synchronized (questionId) {
+            UpdateWrapper<Question> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("id", questionId);
+            updateWrapper.setSql("submitNum = submitNum + 1");
+            boolean updateRes = questionService.update(updateWrapper);
+            if (!updateRes) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目提交数修改失败");
+            }
+        }
+        // 异步执行判题服务
         Long userQuestionId = userQuestion.getId();
         CompletableFuture.runAsync(() -> {
             judgeService.doJudge(userQuestionId);
@@ -129,6 +141,12 @@ public class UserQuestionServiceImpl extends ServiceImpl<UserQuestionMapper, Use
         if (!Objects.equals(userId, userQuestion.getUserId()) && !userService.isAdmin(loginUser)) {
             userQuestionVO.setCode(null);
         }
+        // 题目提交用户信息
+        Long submitUserId = userQuestion.getUserId();
+        User user = userService.getById(submitUserId);
+        UserVO userVO = new UserVO();
+        userVO.setUserName(user.getUserName());
+        userQuestionVO.setUserVO(userVO);
         return userQuestionVO;
     }
 }

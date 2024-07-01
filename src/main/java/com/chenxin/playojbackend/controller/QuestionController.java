@@ -11,11 +11,17 @@ import com.chenxin.playojbackend.common.ResultUtils;
 import com.chenxin.playojbackend.constant.UserConstant;
 import com.chenxin.playojbackend.exception.BusinessException;
 import com.chenxin.playojbackend.exception.ThrowUtils;
+import com.chenxin.playojbackend.manager.RedisLimiterManager;
 import com.chenxin.playojbackend.model.dto.question.*;
+import com.chenxin.playojbackend.model.dto.userquestion.QuestionSubmitQueryRequest;
+import com.chenxin.playojbackend.model.dto.userquestion.UserQuestionAddRequest;
 import com.chenxin.playojbackend.model.entity.Question;
 import com.chenxin.playojbackend.model.entity.User;
+import com.chenxin.playojbackend.model.entity.UserQuestion;
 import com.chenxin.playojbackend.model.vo.QuestionVO;
+import com.chenxin.playojbackend.model.vo.UserQuestionVO;
 import com.chenxin.playojbackend.service.QuestionService;
+import com.chenxin.playojbackend.service.UserQuestionService;
 import com.chenxin.playojbackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -29,8 +35,8 @@ import java.util.List;
 /**
  * 帖子接口
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author chenxin777
+ * 
  */
 @RestController
 @RequestMapping("/question")
@@ -42,6 +48,12 @@ public class QuestionController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private UserQuestionService userQuestionService;
+
+    @Resource
+    private RedisLimiterManager redisLimiterManager;
 
     // region 增删改查
 
@@ -285,6 +297,74 @@ public class QuestionController {
         }
         boolean result = questionService.updateById(question);
         return ResultUtils.success(result);
+    }
+
+    /**
+     * @param userQuestionAddRequest
+     * @param request
+     * @return com.chenxin.playojbackend.common.BaseResponse<java.lang.Integer>
+     * @description 提交题目
+     * @author fangchenxin
+     * @date 2024/6/14 00:14
+     */
+    @PostMapping("/user_question/do")
+    public BaseResponse<Long> doUserQuestion(@RequestBody UserQuestionAddRequest userQuestionAddRequest,
+                                             HttpServletRequest request) {
+        if (userQuestionAddRequest == null || userQuestionAddRequest.getQuestionId() < 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 登录才能提交
+        final User loginUser = userService.getLoginUser(request);
+        // 限流
+        redisLimiterManager.doRateLimit("question_submit_" + loginUser.getId());
+        Long result = userQuestionService.doUserQuestion(userQuestionAddRequest, loginUser);
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * @description 题目提交（管理员）
+     * @author fangchenxin
+     * @date 2024/7/1 17:42
+     * @param questionSubmitQueryRequest
+     * @param request
+     * @return com.chenxin.playojbackend.common.BaseResponse<com.baomidou.mybatisplus.extension.plugins.pagination.Page < com.chenxin.playojbackend.model.vo.UserQuestionVO>>
+     */
+    @PostMapping("/user_question/list/page")
+    public BaseResponse<Page<UserQuestionVO>> listQuestionSubmitByPage(@RequestBody QuestionSubmitQueryRequest questionSubmitQueryRequest, HttpServletRequest request) {
+        if (questionSubmitQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        final User loginUser = userService.getLoginUser(request);
+        if (!userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        int current = questionSubmitQueryRequest.getCurrent();
+        int pageSize = questionSubmitQueryRequest.getPageSize();
+        Page<UserQuestion> userQuestionPage = userQuestionService.page(new Page<>(current, pageSize), userQuestionService.getQueryWrapper(questionSubmitQueryRequest));
+        // 脱敏信息
+        return ResultUtils.success(userQuestionService.getQuestionVOPage(userQuestionPage, loginUser));
+    }
+
+    /**
+     * @description 我的题目提交
+     * @author fangchenxin
+     * @date 2024/7/1 17:41
+     * @param questionSubmitQueryRequest
+     * @param request
+     * @return com.chenxin.playojbackend.common.BaseResponse<com.baomidou.mybatisplus.extension.plugins.pagination.Page < com.chenxin.playojbackend.model.vo.UserQuestionVO>>
+     */
+    @PostMapping("/my/user_question/list/page")
+    public BaseResponse<Page<UserQuestionVO>> listMyQuestionSubmitByPage(@RequestBody QuestionSubmitQueryRequest questionSubmitQueryRequest, HttpServletRequest request) {
+        if (questionSubmitQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        final User loginUser = userService.getLoginUser(request);
+        questionSubmitQueryRequest.setUserId(loginUser.getId());
+        int current = questionSubmitQueryRequest.getCurrent();
+        int pageSize = questionSubmitQueryRequest.getPageSize();
+        Page<UserQuestion> userQuestionPage = userQuestionService.page(new Page<>(current, pageSize), userQuestionService.getQueryWrapper(questionSubmitQueryRequest));
+        // 脱敏信息
+        return ResultUtils.success(userQuestionService.getQuestionVOPage(userQuestionPage, loginUser));
     }
 
 }
